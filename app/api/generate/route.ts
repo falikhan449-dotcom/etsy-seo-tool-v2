@@ -19,7 +19,7 @@ Please generate:
 Format the output clearly.`;
 
     const apiKey = process.env.GEMINI_API_KEY;
-    const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,16 +29,8 @@ Format the output clearly.`;
       }),
     });
 
-    const data = await apiResponse.json();
-
-    if (!apiResponse.ok) {
-      return NextResponse.json({ success: false, error: data.error?.message || "API Error" }, { status: 500 });
-    }
-
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      return NextResponse.json({ success: false, error: "Empty response received from AI model." }, { status: 500 });
-    }
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated";
 
     return NextResponse.json({ success: true, data: text });
   } catch (error: any) {
