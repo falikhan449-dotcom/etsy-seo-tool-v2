@@ -5,6 +5,13 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { productName, targetKeywords, tone } = body;
 
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    // Check if API Key is missing in Vercel
+    if (!apiKey) {
+      return NextResponse.json({ success: false, error: "API Key is missing in Vercel Environment Variables." }, { status: 400 });
+    }
+
     const prompt = `Act as an expert Etsy SEO and copywriting assistant. 
 Create an optimized Etsy product listing based on the following details:
 - Product Name/Topic: ${productName}
@@ -18,8 +25,7 @@ Please generate:
 
 Format the output clearly.`;
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -30,7 +36,17 @@ Format the output clearly.`;
     });
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated";
+
+    // Agar Google API koi error de rahi hai, toh wo screen par show ho
+    if (!response.ok) {
+      return NextResponse.json({ success: false, error: `Google API Error: ${data.error?.message || 'Unknown error'}` }, { status: response.status });
+    }
+
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!text) {
+      return NextResponse.json({ success: false, error: "Empty response from Gemini." }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true, data: text });
   } catch (error: any) {
