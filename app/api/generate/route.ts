@@ -5,11 +5,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { productName, targetKeywords, tone } = body;
 
-    // Vercel se key le kar us mein se extra spaces aur quotes (agar koi hain) saaf karna
-    let rawKey = process.env.GEMINI_API_KEY || "";
-    const apiKey = rawKey.replace(/['"]/g, '').trim();
+    const accessToken = process.env.GEMINI_API_KEY || "";
 
-    if (!apiKey) {
+    if (!accessToken) {
       return NextResponse.json({ success: false, error: "API Key is missing in Vercel." }, { status: 400 });
     }
 
@@ -26,11 +24,11 @@ Please generate:
 
 Format the output clearly.`;
 
-    // Aap ki purani key ke mutabiq gemini-pro wapas set kar diya gaya hai
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }]
