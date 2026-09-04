@@ -5,9 +5,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { productName, targetKeywords, tone } = body;
 
-    const accessToken = process.env.GEMINI_API_KEY || "";
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
 
-    if (!accessToken) {
+    if (!apiKey) {
       return NextResponse.json({ success: false, error: "API Key is missing in Vercel." }, { status: 400 });
     }
 
@@ -24,11 +24,10 @@ Please generate:
 
 Format the output clearly.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }]
