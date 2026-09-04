@@ -1,8 +1,4 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
-
-// Initialize Gemini API client using the environment variable already set in Vercel
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req: Request) {
   try {
@@ -22,12 +18,21 @@ Please generate:
 
 Format the output clearly.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
+    const apiKey = process.env.GEMINI_API_KEY;
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      }),
     });
 
-    return NextResponse.json({ success: true, data: response.text });
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated";
+
+    return NextResponse.json({ success: true, data: text });
   } catch (error: any) {
     console.error("API Error:", error);
     return NextResponse.json({ success: false, error: error.message || "Internal Server Error" }, { status: 500 });
